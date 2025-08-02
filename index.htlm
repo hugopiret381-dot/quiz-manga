@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz Manga</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Quiz Manga</h1>
+    <div id="question-container">
+      <p id="question"></p>
+      <div id="answers"></div>
+    </div>
+    <button id="next-btn" onclick="nextQuestion()">Suivant</button>
+    <div id="result" class="hidden">
+      <p>Score : <span id="score"></span></p>
+      <p id="reward-message"></p>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
