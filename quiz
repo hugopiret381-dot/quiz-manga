@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Manga Classique</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #111;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+    header, footer {
+      text-align: center;
+      padding: 1rem;
+      background-color: #222;
+    }
+    main {
+      padding: 2rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    .quiz-box, .inventory, .shop, .battle-pass, .settings, .missions {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background-color: #1e1e1e;
+      border-radius: 10px;
+    }
+    button {
+      background-color: #3a3a3a;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 0.2rem;
+    }
+    button:hover {
+      background-color: #555;
+    }
+    .question {
+      margin-bottom: 1rem;
+    }
+    .inventory-item, .shop-item, .reward-item {
+      padding: 0.5rem;
+      margin: 0.3rem 0;
+      background-color: #2a2a2a;
+      border-radius: 5px;
+    }
+    .level-bar {
+      height: 20px;
+      background-color: #333;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+    .level-bar-fill {
+      height: 100%;
+      background-color: limegreen;
+      width: 0%;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Quiz Manga Classique</h1>
+  </header>
+
+  <main>
+    <div class="quiz-box">
+      <h2>Question <span id="question-number">1</span></h2>
+      <div class="question" id="question-text"></div>
+      <div id="answers"></div>
+      <button onclick="nextQuestion()">Suivant</button>
+    </div>
+
+    <div class="battle-pass">
+      <h2>Pass de Combat</h2>
+      <div class="missions">
+        <p><strong>Missions :</strong></p>
+        <ul id="missions-list"></ul>
+      </div>
+      <p>Niveau : <span id="level">1</span></p>
+      <div class="level-bar">
+        <div id="level-bar-fill" class="level-bar-fill"></div>
+      </div>
+    </div>
+
+    <div class="inventory">
+      <h2>Inventaire</h2>
+      <div id="inventory-items"></div>
+    </div>
+
+    <div class="shop">
+      <h2>Boutique</h2>
+      <div class="shop-item">
+        <p>Récompense gratuite (pub) : <button onclick="watchAd()">Regarder une pub</button></p>
+        <p id="shop-cooldown"></p>
+      </div>
+    </div>
+
+    <div class="settings">
+      <h2>Réglages</h2>
+      <button onclick="toggleSound()">Son : <span id="sound-status">On</span></button>
+      <button onclick="resetGame()">Réinitialiser</button>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; Quiz Manga 2025</p>
+  </footer>
+
+  <script>
+    const questions = [
+      { q: "Quel est le nom du protagoniste de One Piece ?", a: ["Luffy", "Naruto", "Ichigo", "Goku"], correct: 0 },
+      { q: "Quel manga met en scène des Titans ?", a: ["Death Note", "Bleach", "One Piece", "L'Attaque des Titans"], correct: 3 },
+      { q: "Qui utilise un Death Note ?", a: ["Light Yagami", "Sasuke", "Levi", "Gon"], correct: 0 },
+      { q: "Quel héros est un ninja ?", a: ["Naruto", "Goku", "Ichigo", "Luffy"], correct: 0 },
+      { q: "Dans quel manga trouve-t-on les Bankai ?", a: ["Bleach", "Naruto", "One Piece", "Death Note"], correct: 0 }
+    ];
+
+    const missions = [
+      { id: 1, desc: "Répondre à 3 questions", progress: 0, goal: 3, done: false },
+      { id: 2, desc: "Gagner une récompense dans la boutique", progress: 0, goal: 1, done: false }
+    ];
+
+    let current = 0;
+    let level = 1;
+    let xp = 0;
+    let inventory = [];
+    let soundOn = true;
+    let lastAdTime = 0;
+
+    function renderQuestion() {
+      const q = questions[current];
+      document.getElementById("question-text").innerText = q.q;
+      document.getElementById("question-number").innerText = current + 1;
+      const answersDiv = document.getElementById("answers");
+      answersDiv.innerHTML = "";
+      q.a.forEach((a, i) => {
+        const btn = document.createElement("button");
+        btn.innerText = a;
+        btn.onclick = () => checkAnswer(i);
+        answersDiv.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(i) {
+      if (i === questions[current].correct) {
+        xp += 20;
+        missions[0].progress++;
+        checkMissions();
+        updateLevelBar();
+      }
+    }
+
+    function nextQuestion() {
+      current = (current + 1) % questions.length;
+      renderQuestion();
+    }
+
+    function checkMissions() {
+      missions.forEach(m => {
+        if (!m.done && m.progress >= m.goal) {
+          m.done = true;
+          addToInventory(`Badge Mission ${m.id}`);
+        }
+      });
+      renderMissions();
+    }
+
+    function updateLevelBar() {
+      const fill = document.getElementById("level-bar-fill");
+      fill.style.width = `${(xp % 100)}%`;
+      const newLevel = Math.floor(xp / 100) + 1;
+      if (newLevel > level) {
+        level = newLevel;
+        document.getElementById("level").innerText = level;
+        addToInventory(`Skin niveau ${level}`);
+      }
+    }
+
+    function renderMissions() {
+      const ul = document.getElementById("missions-list");
+      ul.innerHTML = "";
+      missions.forEach(m => {
+        const li = document.createElement("li");
+        li.textContent = `${m.desc} (${m.progress}/${m.goal}) ${m.done ? '✅' : ''}`;
+        ul.appendChild(li);
+      });
+    }
+
+    function addToInventory(item) {
+      inventory.push(item);
+      renderInventory();
+    }
+
+    function renderInventory() {
+      const div = document.getElementById("inventory-items");
+      div.innerHTML = "";
+      inventory.forEach(i => {
+        const p = document.createElement("div");
+        p.className = "inventory-item";
+        p.innerText = i;
+        div.appendChild(p);
+      });
+    }
+
+    function watchAd() {
+      const now = Date.now();
+      if (now - lastAdTime < 1800000) {
+        alert("Une récompense gratuite sera disponible dans 30 minutes.");
+        return;
+      }
+      lastAdTime = now;
+      addToInventory("Récompense de pub");
+      missions[1].progress++;
+      checkMissions();
+      updateShopCooldown();
+    }
+
+    function updateShopCooldown() {
+      const div = document.getElementById("shop-cooldown");
+      const interval = setInterval(() => {
+        const now = Date.now();
+        const diff = 1800000 - (now - lastAdTime);
+        if (diff <= 0) {
+          div.innerText = "Récompense gratuite disponible !";
+          clearInterval(interval);
+        } else {
+          const mins = Math.floor(diff / 60000);
+          const secs = Math.floor((diff % 60000) / 1000);
+          div.innerText = `Prochaine récompense dans ${mins}m ${secs}s`;
+        }
+      }, 1000);
+    }
+
+    function toggleSound() {
+      soundOn = !soundOn;
+      document.getElementById("sound-status").innerText = soundOn ? "On" : "Off";
+    }
+
+    function resetGame() {
+      if (confirm("Tout réinitialiser ?")) {
+        location.reload();
+      }
+    }
+
+    // Initialisation
+    renderQuestion();
+    renderInventory();
+    renderMissions();
+    updateLevelBar();
+    updateShopCooldown();
+  </script>
+</body>
+</html>
