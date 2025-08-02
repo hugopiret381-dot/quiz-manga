@@ -1,0 +1,27 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #1a1a1a;
+  color: #fff;
+  text-align: center;
+}
+
+.container {
+  margin-top: 100px;
+}
+
+button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+#answers button {
+  display: block;
+  margin: 10px auto;
+  width: 200px;
+}
+
+.hidden {
+  display: none;
+}
